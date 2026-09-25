@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090b12">
+<title>CyberLab — Cybersecurity Playground</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090b12;color:#e8edf7;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:42px 20px 24px;text-align:center;background:radial-gradient(circle at 50% 0,#18233d 0,#090b12 55%);border-bottom:1px solid #202638}
+h1{font-size:42px;margin:0 0 8px;letter-spacing:-1px}header p{margin:0;color:#9ca8bd}
+main{max-width:1050px;margin:auto;padding:24px 16px 60px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:#101521;border:1px solid #232b3d;border-radius:16px;padding:20px;box-shadow:0 8px 30px #0004}.card h2{margin:0 0 6px;font-size:20px}.muted{color:#8995aa}
+input,textarea,button{font:inherit}input,textarea{width:100%;margin:12px 0;padding:12px;border-radius:10px;border:1px solid #30394d;background:#0a0e17;color:#fff;outline:none}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;background:#4f7cff;color:white;font-weight:700}button:hover{filter:brightness(1.12)}
+.result{margin-top:10px;padding:12px;border-radius:10px;background:#0b101b;min-height:42px}.score{font-size:28px;font-weight:800}
+.quiz button{display:block;width:100%;margin:8px 0;text-align:left;background:#182238}.quiz button.correct{background:#174d38}.quiz button.wrong{background:#54272c}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#182238;color:#9fb7ff;margin:3px;font-size:12px}
+footer{text-align:center;color:#66728a;padding:20px}code{color:#a9c1ff}
+</style>
+</head>
+<body>
+<header><h1>🛡️ CyberLab</h1><p>Interactive cybersecurity playground — learn by doing.</p></header>
+<main>
+<div class="grid">
+<section class="card">
+<h2>🔐 Password Lab</h2><p class="muted">Проверь пароль локально. Ничего никуда не отправляется.</p>
+<input id="pw" type="password" placeholder="Введите тестовый пароль">
+<div id="pwResult" class="result">Начните вводить пароль.</div>
+</section>
+
+<section class="card">
+<h2>🎣 Phishing Detector</h2><p class="muted">Выбери, что делать с подозрительным сообщением.</p>
+<div id="quiz" class="quiz"></div>
+<div id="quizResult" class="result"></div>
+</section>
+
+<section class="card">
+<h2>#️⃣ Hash Lab</h2><p class="muted">SHA-256 вычисляется прямо в браузере через Web Crypto API.</p>
+<input id="hashInput" placeholder="Текст для хеширования">
+<button id="hashBtn">Получить SHA-256</button>
+<div id="hashResult" class="result" style="word-break:break-all">—</div>
+</section>
+
+<section class="card">
+<h2>📋 Security Checklist</h2>
+<p class="muted">Мини-чеклист для личной цифровой безопасности.</p>
+<label><input type="checkbox"> Уникальные пароли</label><br>
+<label><input type="checkbox"> Двухфакторная аутентификация</label><br>
+<label><input type="checkbox"> Обновления установлены</label><br>
+<label><input type="checkbox"> Резервные копии</label><br>
+<label><input type="checkbox"> Проверяю ссылки перед входом</label>
+</section>
+</div>
+</main>
+<footer>CyberLab • Educational & defensive cybersecurity • Runs locally in your browser</footer>
+
+<script>
+const pw=document.getElementById('pw'), out=document.getElementById('pwResult');
+pw.addEventListener('input',()=>{
+ const s=pw.value, checks=[s.length>=12,/[a-z]/.test(s),/[A-Z]/.test(s),/\d/.test(s),/[^A-Za-z0-9]/.test(s)];
+ const n=checks.filter(Boolean).length;
+ if(!s){out.textContent='Начните вводить пароль.';return}
+ const label=n<=2?'Слабый':n<=4?'Средний':'Сильный';
+ out.innerHTML='<span class="score">'+n+'/5</span><br>'+label+' — длина и разнообразие символов имеют значение.';
+});
+
+const questions=[
+ {q:'Сообщение: «Ваш аккаунт заблокируют через 10 минут! Срочно войдите по ссылке». Что делать?',a:['Перейти по ссылке','Открыть сайт сервиса вручную и проверить уведомления','Отправить пароль отправителю'],c:1},
+ {q:'Письмо просит код 2FA, потому что «служба поддержки» его потеряла. Что делать?',a:['Сообщить код','Не сообщать код и проверить обращение через официальный канал','Опубликовать код в чате'],c:1},
+ {q:'URL выглядит почти как знакомый сайт, но домен отличается одной буквой. Что делать?',a:['Войти как обычно','Проверить настоящий домен и открыть сайт через сохранённую закладку','Ввести пароль повторно'],c:1}
+];
+let qi=0, correct=0; const quiz=document.getElementById('quiz'), qr=document.getElementById('quizResult');
+function renderQ(){
+ if(qi>=questions.length){quiz.innerHTML='<div class="score">'+correct+'/'+questions.length+'</div><p>Тест завершён.</p><button onclick="qi=0;correct=0;renderQ()">Пройти снова</button>';return}
+ const x=questions[qi]; quiz.innerHTML='<b>'+x.q+'</b>'+x.a.map((v,i)=>'<button onclick="answer('+i+')">'+v+'</button>').join('');
+ qr.textContent='Вопрос '+(qi+1)+' из '+questions.length;
+}
+window.answer=i=>{const x=questions[qi];if(i===x.c)correct++;qi++;renderQ()};renderQ();
+
+document.getElementById('hashBtn').onclick=async()=>{
+ const data=new TextEncoder().encode(document.getElementById('hashInput').value);
+ const buf=await crypto.subtle.digest('SHA-256',data);
+ document.getElementById('hashResult').textContent=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+};
+</script>
+</body>
+</html>
