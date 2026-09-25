@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CyberLab — VPN Check</title>
+<style>
+body{font-family:system-ui;background:#0b1020;color:#eef2ff;max-width:800px;margin:auto;padding:24px}
+.card{background:#151c32;border:1px solid #2b3658;border-radius:16px;padding:20px;margin:16px 0}
+button{background:#5b7cfa;color:white;border:0;border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer}
+.value{font-family:monospace;word-break:break-all}.ok{color:#6ee7b7}.warn{color:#fbbf24}
+small{color:#9aa7c7}
+</style></head>
+<body>
+<h1>🛡️ VPN Check</h1>
+<p>Проверка внешнего IP и признаков VPN/прокси.</p>
+<div class="card"><button id="go">Проверить</button><div id="out"></div></div>
+<div class="card"><b>Важно</b><p>Это не даёт 100% гарантии. Сервисы определения IP могут ошибаться, особенно с корпоративными сетями, мобильными операторами и новыми VPN-адресами.</p></div>
+<script>
+const out=document.getElementById('out');
+async function check(){
+ out.innerHTML='<p>Проверяю…</p>';
+ try{
+  const r=await fetch('https://ipwho.is/?output=json',{cache:'no-store'});
+  if(!r.ok) throw new Error('API error');
+  const d=await r.json();
+  if(!d.success) throw new Error('Не удалось получить IP');
+  const sec=d.security||{};
+  const vpn=!!sec.vpn, proxy=!!sec.proxy, tor=!!sec.tor, hosting=!!sec.hosting;
+  const flags=[vpn&&'VPN',proxy&&'Proxy',tor&&'Tor',hosting&&'Hosting/Datacenter'].filter(Boolean);
+  out.innerHTML=`
+   <hr>
+   <p><b>Внешний IP:</b> <span class="value">${d.ip||'—'}</span></p>
+   <p><b>Страна:</b> ${d.country||'—'} ${d.flag?.emoji||''}</p>
+   <p><b>Город:</b> ${d.city||'—'}</p>
+   <p><b>Провайдер:</b> ${d.connection?.isp||'—'}</p>
+   <p><b>ASN:</b> ${d.connection?.asn||'—'}</p>
+   <p><b>Признаки:</b> ${flags.length?'<span class="warn">'+flags.join(', ')+'</span>':'<span class="ok">явных признаков VPN/Proxy/Tor не обнаружено</span>'}</p>
+   <small>Источник IP-информации: ipwho.is. Результат — индикатор, а не доказательство.</small>`;
+ }catch(e){out.innerHTML='<p class="warn">Ошибка: '+e.message+'</p><p>Проверь подключение к интернету и разрешение запросов в браузере.</p>'}
+}
+document.getElementById('go').onclick=check;
+</script></body></html>
