@@ -51,6 +51,25 @@ footer{text-align:center;color:#66728a;padding:20px}code{color:#a9c1ff}
 <label><input type="checkbox"> Резервные копии</label><br>
 <label><input type="checkbox"> Проверяю ссылки перед входом</label>
 </section>
+
+
+<!-- CyberLab X: defensive packet visualizer -->
+<section class="card" style="grid-column:1/-1">
+<h2>📡 Network Packet Lab</h2>
+<p class="muted">Безопасная локальная симуляция сетевого трафика. Генерирует учебные пакеты и показывает, что обычно видно на уровне метаданных.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button id="scanBtn">Запустить симуляцию</button>
+<button id="clearBtn">Очистить</button>
+</div>
+<div id="traffic" class="result" style="max-height:280px;overflow:auto;margin-top:14px"></div>
+</section>
+
+<section class="card" style="grid-column:1/-1">
+<h2>🧩 Cyber Mission</h2>
+<p class="muted">Мини-квест: найди подозрительное событие среди нормальных логов.</p>
+<div id="mission" class="result"></div>
+<button id="missionBtn">Начать миссию</button>
+</section>
 </div>
 </main>
 <footer>CyberLab • Educational & defensive cybersecurity • Runs locally in your browser</footer>
@@ -83,6 +102,39 @@ document.getElementById('hashBtn').onclick=async()=>{
  const buf=await crypto.subtle.digest('SHA-256',data);
  document.getElementById('hashResult').textContent=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 };
+
+<script>
+const traffic=document.getElementById('traffic'), scanBtn=document.getElementById('scanBtn'), clearBtn=document.getElementById('clearBtn');
+const domains=['cdn.example.test','api.example.test','updates.example.test','login.example.test'];
+function packet(){
+ const t=new Date().toLocaleTimeString();
+ const ip='192.168.1.'+(2+Math.floor(Math.random()*40));
+ const port=[443,443,443,53,80][Math.floor(Math.random()*5)];
+ const bytes=[512,1024,2048,4096,8192][Math.floor(Math.random()*5)];
+ const d=domains[Math.floor(Math.random()*domains.length)];
+ return '['+t+'] '+ip+' → '+d+':'+port+'  '+bytes+' B  TLS/HTTP-DNS';
+}
+scanBtn.onclick=()=>{
+ traffic.innerHTML='<b>LIVE TRAFFIC SIMULATION</b><br>';
+ let n=0; const timer=setInterval(()=>{traffic.innerHTML+=packet()+'<br>';traffic.scrollTop=traffic.scrollHeight;if(++n>=18)clearInterval(timer)},140);
+};
+clearBtn.onclick=()=>traffic.innerHTML='';
+const mission=document.getElementById('mission'), missionBtn=document.getElementById('missionBtn');
+missionBtn.onclick=()=>{
+ const logs=[
+ '19:04:11 GET /api/profile → 200',
+ '19:04:13 DNS query → cdn.example.test',
+ '19:04:17 POST /login → 200',
+ '19:04:21 47 failed login attempts → same account',
+ '19:04:23 GET /updates → 200',
+ '19:04:25 DNS query → updates.example.test'
+ ];
+ mission.innerHTML=logs.map((x,i)=>'<div style="padding:7px;border-bottom:1px solid #20283a"><code>'+x+'</code></div>').join('')+
+ '<p><b>Задание:</b> какое событие требует проверки?</p>'+
+ '<button onclick="missionResult()">Проверить ответ</button>';
+};
+window.missionResult=()=>{mission.innerHTML+='<p class="ok" style="color:#6ee7b7"><b>✓ Верно.</b> Серия неудачных входов требует проверки и может указывать на попытку подбора пароля.</p>'};
+</script>
 </script>
 </body>
 </html>
